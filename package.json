@@ -1,0 +1,19 @@
+{
+  "name": "quazer",
+  "version": "1.0.0",
+  "main": "main.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "util": "^0.12.5"
+  },
+  "directories": {
+    "example": "examples"
+  },
+  "devDependencies": {},
+  "description": ""
+}
