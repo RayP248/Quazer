@@ -31,23 +31,32 @@ export class Err extends Error {
     const GREEN = "\x1b[32m";
     const YELLOW = "\x1b[33m";
     const BLUE = "\x1b[34m";
+    const LIGHT_GREEN = "\x1b[92m";
     const line = `${this.token.line.start}-${this.token.line.end}`;
     const column = `${this.token.column.start}-${this.token.column.end}`;
     let sourceLine = "";
     if (typeof line === "string") {
       const [startLine, endLine] = line.split("-").map(Number);
       const lines = src.split("\n");
-      const contextLines = lines.slice(
-        Math.max(0, startLine - 3),
-        startLine - 1
+      let contextLines = lines.slice(Math.max(0, startLine - 3), startLine - 1);
+      contextLines = contextLines.map((elem) =>
+        elem.replace(/([0-9]+(\.[0-9]+)*)/g, `${LIGHT_GREEN}$1${RESET}`)
       );
       sourceLine = contextLines
         .map((line, index) => `|     ${startLine - 2 + index} | ${line}`)
         .join("\n");
-      const singleLine = lines[startLine - 1] || "";
+      let singleLine = lines[startLine - 1] || "";
+      singleLine = singleLine.replace(
+        /([0-9]+(\.[0-9]+)*)/g,
+        `${LIGHT_GREEN}$1${RESET}`
+      );
       sourceLine += `\n|     ${startLine} | ${singleLine}`;
     } else {
-      const singleLine = src.split("\n")[line - 1] || "";
+      let singleLine = src.split("\n")[line - 1] || "";
+      singleLine = singleLine.replace(
+        /([0-9]+(\.[0-9]+)*)/g,
+        `${LIGHT_GREEN}$1${RESET}`
+      );
       sourceLine = `${line} | ${singleLine}`;
     }
     let hint = "";
@@ -72,9 +81,14 @@ export class Err extends Error {
         hint = "NA";
         break;
     }
-    const underline =
-      " ".repeat(this.token.column.start) +
-      "^".repeat(this.token.column.end - this.token.column.start);
+    const iszero = this.token.column.end - this.token.column.start == 0;
+    let underline =
+      " ".repeat(this.token.column.start + 3) +
+      "^".repeat(iszero ? 1 : this.token.column.end - this.token.column.start);
+    if (iszero) {
+      underline += "-".repeat(sourceLine.split(/\|     [0-9]+ \| /)[1].length);
+      underline += ">";
+    }
     console.error(
       ` --------------------------------------------------
 | quazer # ${RED}Error:${RESET} ${this.message.replace(/\n$/, "")}
