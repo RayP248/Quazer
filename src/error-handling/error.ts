@@ -16,15 +16,17 @@ export class Err extends Error {
     const GREEN = "\x1b[32m";
     const YELLOW = "\x1b[33m";
     const BLUE = "\x1b[34m";
-    const line = this.token.line ? this.token.line : this.token.startLine && this.token.endLine ? `${this.token.startLine} - ${this.token.endLine}` : 0;
-    const column = this.token.column ? this.token.column : this.token.startColumn && this.token.endColumn ? `${this.token.startColumn} - ${this.token.endColumn}` : 0;
-    let sourceLine = '';
-    if (typeof line === 'string') {
-      const [startLine, endLine] = line.split(' - ').map(Number);
-      const lines = src.split('\n').slice(startLine - 1, endLine);
-      sourceLine = lines.map((line, index) => `${startLine + index} | ${line}`).join('\n');
+    const line = `${this.token.line.start}-${this.token.line.end}`;
+    const column = `${this.token.column.start}-${this.token.column.end}`;
+    let sourceLine = "";
+    if (typeof line === "string") {
+      const [startLine, endLine] = line.split("-").map(Number);
+      const lines = src.split("\n").slice(startLine - 1, endLine);
+      sourceLine = lines
+        .map((line, index) => `${startLine + index} | ${line}`)
+        .join("\n");
     } else {
-      const singleLine = src.split('\n')[line - 1] || '';
+      const singleLine = src.split("\n")[line - 1] || "";
       sourceLine = `${line} | ${singleLine}`;
     }
     console.error(

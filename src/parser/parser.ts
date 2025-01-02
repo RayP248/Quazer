@@ -7,6 +7,8 @@ import { createTokenLookups } from "./lookups";
 export interface parser {
   tokens: Token[];
   pos: number;
+  line: Record<string, number>;
+  column: Record<string, number>;
 }
 
 function createParser(tokens: Token[]): parser {
@@ -14,6 +16,8 @@ function createParser(tokens: Token[]): parser {
   return {
     tokens,
     pos: 0,
+    line: { start: 1, end: 1 },
+    column: { start: 1, end: 1 },
   };
 }
 
@@ -27,12 +31,11 @@ export function parse(tokens: Token[]): BlockStmt {
 
   return {
     body,
-    startLine: body[0]?.startLine,
-    endLine: body[body.length - 1]?.endLine,
-    startColumn: body[0]?.startColumn,
-    endColumn: body[body.length - 1]?.endColumn,
-    line: body[0]?.line,
-    column: body[0]?.column
+    line: { start: body[0]?.line.start, end: body[body.length - 1]?.line.end },
+    column: {
+      start: body[0]?.column.start,
+      end: body[body.length - 1]?.column.end,
+    },
   };
 }
 

@@ -19,11 +19,7 @@ export function parse_stmt(p: parser): Stmt {
 
   return {
     expression,
-    startLine: expression.startLine,
-    endLine: expression.endLine,
-    startColumn: expression.startColumn,
-    endColumn: expression.endColumn,
     line: expression.line,
-    column: expression.column
+    column: expression.column,
   } as ExpressionStmt;
 }

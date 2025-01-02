@@ -1,10 +1,6 @@
 export interface Stmt {
-  endLine: number;
-  startLine: number;
-  endColumn: number;
-  startColumn: number;
-  line?: number;
-  column?: number;
+  line: Record<string, number>;
+  column: Record<string, number>;
   stmt(): () => {};
 }
 

@@ -31,28 +31,49 @@ export function parse_expr(p: parser, bp: BindingPower): Expr {
 export function parse_primary_expr(p: parser): Expr | undefined {
   switch (currKind(p)) {
     case TokenKind.NUMBER:
-      const number = parseFloat(advance(p).value);
-      return { value: number, startLine: p.line, endLine: p.line, startColumn: p.column, endColumn: p.column, line: p.line, column: p.column } as NumberExpr;
+      const numberToken = advance(p);
+      const number = parseFloat(numberToken.value);
+      return {
+        value: number,
+        line: numberToken.line,
+        column: numberToken.column,
+      } as NumberExpr;
     case TokenKind.STRING:
-      return { value: advance(p).value, startLine: p.line, endLine: p.line, startColumn: p.column, endColumn: p.column, line: p.line, column: p.column } as StringExpr;
+      const stringToken = advance(p);
+      const string = stringToken.value;
+      return {
+        value: string,
+        line: stringToken.line,
+        column: stringToken.column,
+      } as StringExpr;
     case TokenKind.IDENTIFIER:
-      return { value: advance(p).value, startLine: p.line, endLine: p.line, startColumn: p.column, endColumn: p.column, line: p.line, column: p.column } as SymbolExpr;
+      const identifierToken = advance(p);
+      const identifier = identifierToken.value;
+      return {
+        value: identifier,
+        line: identifierToken.line,
+        column: identifierToken.column,
+      } as SymbolExpr;
     default:
-      new Err(currToken(p), `Cannot create primary expression from ${tokenKindString(currKind(p))}`).throw();
+      new Err(
+        currToken(p),
+        `Cannot create primary expression from ${tokenKindString(currKind(p))}`
+      ).throw();
   }
 }
 
-export function parse_binary_expr(p: parser, left: Expr, bp: BindingPower): Expr {
+export function parse_binary_expr(
+  p: parser,
+  left: Expr,
+  bp: BindingPower
+): Expr {
   const operator = advance(p);
   const right = parse_expr(p, bp);
-  console.log(`Binary expression:`,  util.inspect(left, false, null, true), util.inspect(operator, false, null, true), util.inspect(right, false, null, true));
   return {
     left,
     operator,
     right,
-    startLine: left.startLine,
-    endLine: right.endLine,
-    startColumn: left.startColumn,
-    endColumn: right.endColumn
+    line: { start: left.line.start, end: right.line.end },
+    column: { start: left.column.start, end: right.column.end },
   } as BinaryExpr;
 }

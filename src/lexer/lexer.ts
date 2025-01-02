@@ -13,8 +13,8 @@ export interface lexer {
   tokens: Token[];
   source: string;
   pos: number;
-  line: number;
-  column: number;
+  line: Record<string, number>;
+  column: Record<string, number>;
   advanceN(n: number): void;
   push(token: Token): void;
   at(): string;
@@ -27,25 +27,33 @@ export class Lexer implements lexer {
   tokens: Token[];
   source: string;
   pos: number;
-  line: number;
-  column: number;
+  line: Record<string, number>;
+  column: Record<string, number>;
 
-  constructor(patterns: regexPatterns[], tokens: Token[], source: string, pos: number) {
+  constructor(
+    patterns: regexPatterns[],
+    tokens: Token[],
+    source: string,
+    pos: number
+  ) {
     this.patterns = patterns;
     this.tokens = tokens;
     this.source = source;
     this.pos = pos;
-    this.line = 1;
-    this.column = 1;
+    this.line = { start: 1, end: 1 };
+    this.column = { start: 1, end: 1 };
   }
 
   advanceN(n: number): void {
     for (let i = 0; i < n; i++) {
-      if (this.source[this.pos] === '\n') {
-        this.line++;
-        this.column = 1;
+      if (this.source[this.pos] === "\n") {
+        this.line.start++;
+        this.line.end++;
+        this.column.start = 1;
+        this.column.end = 1;
       } else {
-        this.column++;
+        this.column.start++;
+        this.column.end++;
       }
       this.pos++;
     }
@@ -93,8 +101,14 @@ export function tokenize(source: string): Token[] {
 
 function defaultHandler(kind: TokenKind, value: string): regexHandler {
   return (lex, regex) => {
+    const startColumn = lex.column.start;
     lex.advanceN(value.length);
-    lex.push(newToken(kind, value, lex.line, lex.column));
+    lex.push(
+      newToken(kind, value, lex.line, {
+        start: startColumn,
+        end: startColumn + value.length - 1,
+      })
+    );
   };
 }
 
