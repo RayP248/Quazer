@@ -1,6 +1,6 @@
 //TODO: ADD IMPROVED ERROR HANDLING (LINE, COLUMN, CODE SNIPP, ETC)
 
-import { Err } from "../error-handling/error";
+import { Err, ErrorCode } from "../error-handling/error";
 
 export enum TokenKind {
   EOF,
@@ -26,7 +26,6 @@ export enum TokenKind {
 
   OR,
   AND,
-
 
   DOT,
   DOT_DOT,
@@ -66,25 +65,25 @@ export enum TokenKind {
   TYPEOF,
   IN,
 
-  UNKNOWN
+  UNKNOWN,
 }
 
 export const reserved_lu: Record<string, TokenKind> = {
-  'let': TokenKind.LET,
-  'const': TokenKind.CONST,
-  'class': TokenKind.CLASS,
-  'new': TokenKind.NEW,
-  'import': TokenKind.IMPORT,
-  'from': TokenKind.FROM,
-  'fn': TokenKind.FN,
-  'if': TokenKind.IF,
-  'else': TokenKind.ELSE,
-  'foreach': TokenKind.FOREACH,
-  'while': TokenKind.WHILE,
-  'for': TokenKind.FOR,
-  'export': TokenKind.EXPORT,
-  'typeof': TokenKind.TYPEOF,
-  'in': TokenKind.IN
+  let: TokenKind.LET,
+  const: TokenKind.CONST,
+  class: TokenKind.CLASS,
+  new: TokenKind.NEW,
+  import: TokenKind.IMPORT,
+  from: TokenKind.FROM,
+  fn: TokenKind.FN,
+  if: TokenKind.IF,
+  else: TokenKind.ELSE,
+  foreach: TokenKind.FOREACH,
+  while: TokenKind.WHILE,
+  for: TokenKind.FOR,
+  export: TokenKind.EXPORT,
+  typeof: TokenKind.TYPEOF,
+  in: TokenKind.IN,
 };
 
 export interface TokenInterface {
@@ -110,7 +109,7 @@ export class Token implements TokenInterface {
     this.kind = kind;
     this.value = value;
     this.line = { start: line.start, end: line.start };
-    this.column = { start: column.start, end: column.start + value.length - 0 };
+    this.column = { start: column.start, end: column.start + value.length };
   }
 
   debug(): void {
@@ -147,6 +146,9 @@ export function newToken(
   line: Record<string, number>,
   column: Record<string, number>
 ): Token {
+  if (value == "") {
+    return new Token(kind, value, line, { start: column.start, end: -1 });
+  }
   return new Token(kind, value, line, column);
 }
 
@@ -260,7 +262,8 @@ export function tokenKindString(kind: TokenKind): string | void {
           { start: 0, end: 0 },
           { start: 0, end: 0 }
         ),
-        `Unknown token kind: ${kind}`
+        `Unknown token kind: ${kind}`,
+        ErrorCode.UnknownTokenKind
       ).throw();
   }
 }

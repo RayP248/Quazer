@@ -3,6 +3,7 @@ import { BlockStmt } from '../ast/statements';
 import { Stmt } from "../ast/ast";
 import { parse_stmt } from "./stmt";
 import { createTokenLookups } from "./lookups";
+import { Err, ErrorCode } from "../error-handling/error";
 
 export interface parser {
   tokens: Token[];
@@ -58,15 +59,23 @@ export function hasTokens(p: parser): boolean {
   return p.pos < p.tokens.length && currKind(p) != TokenKind.EOF;
 }
 
-export function expectError(p: parser, expectedKind: TokenKind, err: any): Token {
+export function expectError(
+  p: parser,
+  expectedKind: TokenKind,
+  err: any
+): Token {
   const token = currToken(p);
   const kind = token.kind;
 
   if (kind !== expectedKind) {
     if (err) {
-      console.error(err);
+      new Err(token, err, ErrorCode.Expected__Got__).throw();
     } else {
-      console.error(`Expected ${TokenKind[expectedKind]} but got ${TokenKind[kind]} instead.`);
+      new Err(
+        token,
+        `Expected ${TokenKind[expectedKind]} but got ${TokenKind[kind]} instead.`,
+        ErrorCode.Expected__Got__
+      ).throw();
     }
     process.exit(1);
   }

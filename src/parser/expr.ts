@@ -1,16 +1,20 @@
 import { Expr } from "../ast/ast";
 import { BinaryExpr, NumberExpr, StringExpr, SymbolExpr } from "../ast/expressions";
-import { Err } from "../error-handling/error";
+import { Err, ErrorCode } from "../error-handling/error";
 import { TokenKind, tokenKindString } from "../lexer/tokens";
 import { BindingPower, bp_lu, led_lu, nud_lu } from "./lookups";
 import { advance, currKind, currToken, parser } from "./parser";
-import util from 'util';
+import util from "util";
 
 export function parse_expr(p: parser, bp: BindingPower): Expr {
   let tkKind = currKind(p);
   const nud_fn = nud_lu[tkKind];
   if (!nud_fn) {
-    new Err(currToken(p), `No nud function for token kind ${tokenKindString(tkKind)}`).throw();
+    new Err(
+      currToken(p),
+      `No nud function for token kind ${tokenKindString(tkKind)}`,
+      ErrorCode.NoNud
+    ).throw();
   }
 
   let left = nud_fn!(p);
@@ -19,7 +23,11 @@ export function parse_expr(p: parser, bp: BindingPower): Expr {
     tkKind = currKind(p);
     const led_fn = led_lu[tkKind];
     if (!led_fn) {
-      new Err(currToken(p), `No led function for token kind ${tokenKindString(tkKind)}`).throw();
+      new Err(
+        currToken(p),
+        `No led function for token kind ${tokenKindString(tkKind)}`,
+        ErrorCode.NoLed
+      ).throw();
     }
 
     left = led_fn!(p, left, bp);
@@ -57,7 +65,8 @@ export function parse_primary_expr(p: parser): Expr | undefined {
     default:
       new Err(
         currToken(p),
-        `Cannot create primary expression from ${tokenKindString(currKind(p))}`
+        `Cannot create primary expression from ${tokenKindString(currKind(p))}`,
+        ErrorCode.CannotCreatePrimaryExpr
       ).throw();
   }
 }

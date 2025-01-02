@@ -1,4 +1,4 @@
-import { Err } from "../error-handling/error";
+import { Err, ErrorCode } from "../error-handling/error";
 import { newToken, reserved_lu, Token, TokenKind } from "./tokens";
 
 export type regexHandler = (lex: lexer, regex: RegExp) => any;
@@ -91,11 +91,22 @@ export function tokenize(source: string): Token[] {
     }
 
     if (!matched) {
-      new Err(newToken(TokenKind.UNKNOWN, lexerInstance.remainder(), lexerInstance.line, lexerInstance.column), `Unrecognized token near ${lexerInstance.remainder()}`).throw();
+      new Err(
+        newToken(
+          TokenKind.UNKNOWN,
+          "",
+          lexerInstance.line,
+          lexerInstance.column
+        ),
+        `Unrecognized token.`,
+        ErrorCode.UnrecognizedToken
+      ).throw();
     }
   }
 
-  lexerInstance.push(newToken(TokenKind.EOF, 'EOF', lexerInstance.line, lexerInstance.column));
+  lexerInstance.push(
+    newToken(TokenKind.EOF, "EOF", lexerInstance.line, lexerInstance.column)
+  );
   return lexerInstance.tokens;
 }
 
@@ -113,45 +124,122 @@ function defaultHandler(kind: TokenKind, value: string): regexHandler {
 }
 
 function createLexer(source: string): lexer {
-  const lexerInstance: lexer = new Lexer([
-    { regex: new RegExp("[a-zA-Z_][a-zA-Z0-9_]*"), handler: symbolHandler },
-    { regex: new RegExp("[0-9]+(\\.[0-9]+)?"), handler: numberHandler },
-    { regex: new RegExp("\"[^\"]*\""), handler: stringHandler },
-    { regex: new RegExp("#.*"), handler: skipHandler },
-    { regex: new RegExp("\\s+"), handler: skipHandler },
-    { regex: new RegExp("\\["), handler: defaultHandler(TokenKind.OPEN_BRACKET, '[') },
-    { regex: new RegExp("\\]"), handler: defaultHandler(TokenKind.CLOSE_BRACKET, ']') },
-    { regex: new RegExp("\\{"), handler: defaultHandler(TokenKind.OPEN_CURLY, '{') },
-    { regex: new RegExp("\\}"), handler: defaultHandler(TokenKind.CLOSE_CURLY, '}') },
-    { regex: new RegExp("\\("), handler: defaultHandler(TokenKind.OPEN_PAREN, '(') },
-    { regex: new RegExp("\\)"), handler: defaultHandler(TokenKind.CLOSE_PAREN, ')') },
-    { regex: new RegExp("=="), handler: defaultHandler(TokenKind.EQUALS, '==') },
-    { regex: new RegExp("!="), handler: defaultHandler(TokenKind.NOT_EQUALS, '!=') },
-    { regex: new RegExp("="), handler: defaultHandler(TokenKind.ASSIGNMENT, '=') },
-    { regex: new RegExp("!"), handler: defaultHandler(TokenKind.NOT, '!') },
-    { regex: new RegExp("<="), handler: defaultHandler(TokenKind.LESS_EQUALS, '<=') },
-    { regex: new RegExp("<"), handler: defaultHandler(TokenKind.LESS, '<') },
-    { regex: new RegExp(">="), handler: defaultHandler(TokenKind.GREATER_EQUALS, '>=') },
-    { regex: new RegExp(">"), handler: defaultHandler(TokenKind.GREATER, '>') },
-    { regex: new RegExp("\\|\\|"), handler: defaultHandler(TokenKind.OR, '||') },
-    { regex: new RegExp("&&"), handler: defaultHandler(TokenKind.AND, '&&') },
-    { regex: new RegExp("\\.\\."), handler: defaultHandler(TokenKind.DOT_DOT, '..') },
-    { regex: new RegExp("\\."), handler: defaultHandler(TokenKind.DOT, '.') },
-    { regex: new RegExp(";"), handler: defaultHandler(TokenKind.SEMI_COLON, ';') },
-    { regex: new RegExp(":"), handler: defaultHandler(TokenKind.COLON, ':') },
-    { regex: new RegExp("\\?"), handler: defaultHandler(TokenKind.QUESTION, '?') },
-    { regex: new RegExp(","), handler: defaultHandler(TokenKind.COMMA, ',') },
-    { regex: new RegExp("\\+\\+"), handler: defaultHandler(TokenKind.PLUS_PLUS, '++') },
-    { regex: new RegExp("--"), handler: defaultHandler(TokenKind.MINUS_MINUS, '--') },
-    { regex: new RegExp("\\+="), handler: defaultHandler(TokenKind.PLUS_EQUALS, '+=') },
-    { regex: new RegExp("-="), handler: defaultHandler(TokenKind.MINUS_EQUALS, '-=') },
-    { regex: new RegExp("\\+"), handler: defaultHandler(TokenKind.PLUS, '+') },
-    { regex: new RegExp("->"), handler: defaultHandler(TokenKind.ARROW, '->') },
-    { regex: new RegExp("-"), handler: defaultHandler(TokenKind.DASH, '-') },
-    { regex: new RegExp("/"), handler: defaultHandler(TokenKind.SLASH, '/') },
-    { regex: new RegExp("\\*"), handler: defaultHandler(TokenKind.STAR, '*') },
-    { regex: new RegExp("%"), handler: defaultHandler(TokenKind.PERCENT, '%') },
-  ], [], source, 0);
+  const lexerInstance: lexer = new Lexer(
+    [
+      { regex: new RegExp("[a-zA-Z_][a-zA-Z0-9_]*"), handler: symbolHandler },
+      { regex: new RegExp("[0-9]+(\\.[0-9]+)?"), handler: numberHandler },
+      { regex: new RegExp('"[^"]*"'), handler: stringHandler },
+      { regex: new RegExp("#.*"), handler: skipHandler },
+      { regex: new RegExp("\\s+"), handler: skipHandler },
+      {
+        regex: new RegExp("\\["),
+        handler: defaultHandler(TokenKind.OPEN_BRACKET, "["),
+      },
+      {
+        regex: new RegExp("\\]"),
+        handler: defaultHandler(TokenKind.CLOSE_BRACKET, "]"),
+      },
+      {
+        regex: new RegExp("\\{"),
+        handler: defaultHandler(TokenKind.OPEN_CURLY, "{"),
+      },
+      {
+        regex: new RegExp("\\}"),
+        handler: defaultHandler(TokenKind.CLOSE_CURLY, "}"),
+      },
+      {
+        regex: new RegExp("\\("),
+        handler: defaultHandler(TokenKind.OPEN_PAREN, "("),
+      },
+      {
+        regex: new RegExp("\\)"),
+        handler: defaultHandler(TokenKind.CLOSE_PAREN, ")"),
+      },
+      {
+        regex: new RegExp("=="),
+        handler: defaultHandler(TokenKind.EQUALS, "=="),
+      },
+      {
+        regex: new RegExp("!="),
+        handler: defaultHandler(TokenKind.NOT_EQUALS, "!="),
+      },
+      {
+        regex: new RegExp("="),
+        handler: defaultHandler(TokenKind.ASSIGNMENT, "="),
+      },
+      { regex: new RegExp("!"), handler: defaultHandler(TokenKind.NOT, "!") },
+      {
+        regex: new RegExp("<="),
+        handler: defaultHandler(TokenKind.LESS_EQUALS, "<="),
+      },
+      { regex: new RegExp("<"), handler: defaultHandler(TokenKind.LESS, "<") },
+      {
+        regex: new RegExp(">="),
+        handler: defaultHandler(TokenKind.GREATER_EQUALS, ">="),
+      },
+      {
+        regex: new RegExp(">"),
+        handler: defaultHandler(TokenKind.GREATER, ">"),
+      },
+      {
+        regex: new RegExp("\\|\\|"),
+        handler: defaultHandler(TokenKind.OR, "||"),
+      },
+      { regex: new RegExp("&&"), handler: defaultHandler(TokenKind.AND, "&&") },
+      {
+        regex: new RegExp("\\.\\."),
+        handler: defaultHandler(TokenKind.DOT_DOT, ".."),
+      },
+      { regex: new RegExp("\\."), handler: defaultHandler(TokenKind.DOT, ".") },
+      {
+        regex: new RegExp(";"),
+        handler: defaultHandler(TokenKind.SEMI_COLON, ";"),
+      },
+      { regex: new RegExp(":"), handler: defaultHandler(TokenKind.COLON, ":") },
+      {
+        regex: new RegExp("\\?"),
+        handler: defaultHandler(TokenKind.QUESTION, "?"),
+      },
+      { regex: new RegExp(","), handler: defaultHandler(TokenKind.COMMA, ",") },
+      {
+        regex: new RegExp("\\+\\+"),
+        handler: defaultHandler(TokenKind.PLUS_PLUS, "++"),
+      },
+      {
+        regex: new RegExp("--"),
+        handler: defaultHandler(TokenKind.MINUS_MINUS, "--"),
+      },
+      {
+        regex: new RegExp("\\+="),
+        handler: defaultHandler(TokenKind.PLUS_EQUALS, "+="),
+      },
+      {
+        regex: new RegExp("-="),
+        handler: defaultHandler(TokenKind.MINUS_EQUALS, "-="),
+      },
+      {
+        regex: new RegExp("\\+"),
+        handler: defaultHandler(TokenKind.PLUS, "+"),
+      },
+      {
+        regex: new RegExp("->"),
+        handler: defaultHandler(TokenKind.ARROW, "->"),
+      },
+      { regex: new RegExp("-"), handler: defaultHandler(TokenKind.DASH, "-") },
+      { regex: new RegExp("/"), handler: defaultHandler(TokenKind.SLASH, "/") },
+      {
+        regex: new RegExp("\\*"),
+        handler: defaultHandler(TokenKind.STAR, "*"),
+      },
+      {
+        regex: new RegExp("%"),
+        handler: defaultHandler(TokenKind.PERCENT, "%"),
+      },
+    ],
+    [],
+    source,
+    0
+  );
 
   return lexerInstance;
 }
