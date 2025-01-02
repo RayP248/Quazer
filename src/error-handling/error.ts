@@ -32,6 +32,7 @@ export class Err extends Error {
     const YELLOW = "\x1b[33m";
     const BLUE = "\x1b[34m";
     const LIGHT_GREEN = "\x1b[92m";
+    const CYAN = "\x1b[36m";
     const line = `${this.token.line.start}-${this.token.line.end}`;
     const column = `${this.token.column.start}-${this.token.column.end}`;
     let sourceLine = "";
@@ -40,7 +41,7 @@ export class Err extends Error {
       const lines = src.split("\n");
       let contextLines = lines.slice(Math.max(0, startLine - 3), startLine - 1);
       contextLines = contextLines.map((elem) =>
-        elem.replace(/([0-9]+(\.[0-9]+)*)/g, `${LIGHT_GREEN}$1${RESET}`)
+        elem.replace(/([0-9]+(\.[0-9]+))/g, `${LIGHT_GREEN}$1${RESET}`)
       );
       sourceLine = contextLines
         .map((line, index) => `|     ${startLine - 2 + index} | ${line}`)
