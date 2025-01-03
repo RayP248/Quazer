@@ -1,9 +1,16 @@
 import { Expr } from "../ast/ast";
-import { BinaryExpr, NumberExpr, StringExpr, SymbolExpr } from "../ast/expressions";
+import {
+  AssignmentExpr,
+  BinaryExpr,
+  NumberExpr,
+  PrefixExpr,
+  StringExpr,
+  SymbolExpr,
+} from "../ast/expressions";
 import { Err, ErrorCode } from "../error-handling/error";
 import { TokenKind, tokenKindString } from "../lexer/tokens";
 import { BindingPower, bp_lu, led_lu, nud_lu } from "./lookups";
-import { advance, currKind, currToken, parser } from "./parser";
+import { advance, currKind, currToken, expect, parser } from "./parser";
 import util from "util";
 
 export function parse_expr(p: parser, bp: BindingPower): Expr {
@@ -30,7 +37,7 @@ export function parse_expr(p: parser, bp: BindingPower): Expr {
       ).throw();
     }
 
-    left = led_fn!(p, left, bp);
+    left = led_fn!(p, left, bp_lu[currKind(p)]!);
   }
 
   return left;
@@ -85,4 +92,41 @@ export function parse_binary_expr(
     line: { start: left.line.start, end: right.line.end },
     column: { start: left.column.start, end: right.column.end },
   } as BinaryExpr;
+}
+
+export function parse_prefix_expr(p: parser): Expr {
+  const operatorToken = advance(p);
+  const rhs = parse_expr(p, BindingPower.Default);
+  return {
+    operator: operatorToken,
+    rightExpr: rhs,
+    line: { start: operatorToken.line.start, end: rhs.line.end },
+    column: { start: operatorToken.column.start, end: rhs.column.end },
+  } as PrefixExpr;
+}
+
+export function parse_assignment_expr(
+  p: parser,
+  left: Expr,
+  bp: BindingPower
+): Expr {
+  const operator = advance(p);
+  const right = parse_expr(p, bp);
+  return {
+    operator,
+    val: right,
+    assigne: left,
+    line: { start: left.line.start, end: right.line.end },
+    column: { start: left.column.start, end: right.column.end },
+  } as AssignmentExpr;
+}
+
+export function parse_grouping_expr(p: parser): Expr {
+  advance(p);
+  const expr = parse_expr(p, BindingPower.Default);
+  const newExpr = expr;
+  expect(p, TokenKind.CLOSE_PAREN);
+  newExpr.column.start--;
+  newExpr.column.end++;
+  return newExpr;
 }

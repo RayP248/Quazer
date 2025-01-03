@@ -1,9 +1,13 @@
 export interface Stmt {
   line: Record<string, number>;
   column: Record<string, number>;
-  stmt(): () => {};
+  stmt?(): () => {};
 }
 
 export interface Expr extends Stmt {
-  expr(): () => {};
+  expr?(): () => {};
+}
+
+export interface Type extends Stmt {
+  _type?(): () => {};
 }

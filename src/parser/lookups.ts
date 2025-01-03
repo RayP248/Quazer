@@ -2,7 +2,14 @@ import { Expr, Stmt } from "../ast/ast";
 import { NumberExpr, StringExpr, SymbolExpr } from "../ast/expressions";
 import { TokenKind } from "../lexer/tokens";
 import { advance, currKind, parser } from "./parser";
-import { parse_binary_expr, parse_primary_expr } from "./expr";
+import {
+  parse_assignment_expr,
+  parse_binary_expr,
+  parse_grouping_expr,
+  parse_prefix_expr,
+  parse_primary_expr,
+} from "./expr";
+import { parse_var_decl_stmt } from "./stmt";
 
 export enum BindingPower {
   Default,
@@ -15,7 +22,7 @@ export enum BindingPower {
   Unary,
   Call,
   Member,
-  Primary
+  Primary,
 }
 
 type StmtHandler = (p: parser) => Stmt;
@@ -37,8 +44,7 @@ export function led(kind: TokenKind, bp: BindingPower, ledFn: LedHandler) {
   led_lu[kind] = ledFn;
 }
 
-export function nud(kind: TokenKind, bp: BindingPower, nudFn: NudHandler) {
-  bp_lu[kind] = BindingPower.Primary;
+export function nud(kind: TokenKind, nudFn: NudHandler) {
   nud_lu[kind] = nudFn;
 }
 
@@ -48,6 +54,14 @@ export function stmt(kind: TokenKind, stmtFn: StmtHandler) {
 }
 
 export function createTokenLookups() {
+  //Assignment
+  led(TokenKind.ASSIGNMENT, BindingPower.Assignment, parse_assignment_expr);
+  led(TokenKind.PLUS_EQUALS, BindingPower.Assignment, parse_assignment_expr);
+  led(TokenKind.MINUS_EQUALS, BindingPower.Assignment, parse_assignment_expr);
+  led(TokenKind.STAR_EQUALS, BindingPower.Assignment, parse_assignment_expr);
+  led(TokenKind.SLASH_EQUALS, BindingPower.Assignment, parse_assignment_expr);
+  led(TokenKind.PERCENT_EQUALS, BindingPower.Assignment, parse_assignment_expr);
+
   //Logical
   led(TokenKind.AND, BindingPower.Logical, parse_binary_expr);
   led(TokenKind.OR, BindingPower.Logical, parse_binary_expr);
@@ -69,7 +83,13 @@ export function createTokenLookups() {
   led(TokenKind.PERCENT, BindingPower.Multiplicative, parse_binary_expr);
 
   //Literals & Symbols
-  nud(TokenKind.NUMBER, BindingPower.Primary, parse_primary_expr as NudHandler);
-  nud(TokenKind.STRING, BindingPower.Primary, parse_primary_expr as NudHandler);
-  nud(TokenKind.IDENTIFIER, BindingPower.Primary, parse_primary_expr as NudHandler);
+  nud(TokenKind.NUMBER, parse_primary_expr as NudHandler);
+  nud(TokenKind.STRING, parse_primary_expr as NudHandler);
+  nud(TokenKind.IDENTIFIER, parse_primary_expr as NudHandler);
+  nud(TokenKind.OPEN_PAREN, parse_grouping_expr as NudHandler);
+  nud(TokenKind.DASH, parse_prefix_expr as NudHandler);
+
+  //Statements
+  stmt(TokenKind.CONST, parse_var_decl_stmt);
+  stmt(TokenKind.LET, parse_var_decl_stmt);
 }

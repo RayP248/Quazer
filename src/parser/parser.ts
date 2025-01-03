@@ -4,6 +4,7 @@ import { Stmt } from "../ast/ast";
 import { parse_stmt } from "./stmt";
 import { createTokenLookups } from "./lookups";
 import { Err, ErrorCode } from "../error-handling/error";
+import { createTkTypeLookups } from "./types";
 
 export interface parser {
   tokens: Token[];
@@ -14,6 +15,7 @@ export interface parser {
 
 function createParser(tokens: Token[]): parser {
   createTokenLookups();
+  createTkTypeLookups();
   return {
     tokens,
     pos: 0,

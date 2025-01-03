@@ -1,5 +1,5 @@
 import { file, src } from "../global";
-import { Token } from "../lexer/tokens";
+import { reserved_lu, Token, tokenKindString } from "../lexer/tokens";
 import { Expr, Stmt } from "../ast/ast.ts";
 
 export enum ErrorCode {
@@ -9,6 +9,8 @@ export enum ErrorCode {
   NoLed,
   CannotCreatePrimaryExpr,
   Expected__Got__,
+  AssignedValueOrExplicitTypeExpected,
+  AssignedValueExpected,
 }
 
 export class Err extends Error {
@@ -33,24 +35,79 @@ export class Err extends Error {
     const BLUE = "\x1b[34m";
     const LIGHT_GREEN = "\x1b[92m";
     const CYAN = "\x1b[36m";
+    const PURPLE = "\x1b[35m";
+    const DARK_GREEN = "\x1b[38;2;0;100;0m";
+
     const line = `${this.token.line.start}-${this.token.line.end}`;
     const column = `${this.token.column.start}-${this.token.column.end}`;
+
+    const replacements = [
+      (elem: string) => {
+        return elem.replace(
+          /((\-)*[0-9]+(\.[0-9]+)*)/g,
+          `${LIGHT_GREEN}$1${RESET}`
+        );
+      },
+      (elem: string) => {
+        return elem.replace(
+          /(let|const|class|new|import|from|fn|if|else|foreach|while|for|export|typeof|in)/g,
+          `${BLUE}$1${RESET}`
+        );
+      },
+      (elem: string) => {
+        return elem.replace(
+          /(([a-zA-Z_]+):(\s+)([a-zA-Z_\[\]]+))/g,
+          `${CYAN}$2${RESET}:$3${GREEN}$4${RESET}`
+        );
+      },
+      (elem: string) => {
+        return elem.replace(/\b([a-zA-Z_\[\]]+)\b/g, `${CYAN}$1${RESET}`);
+      },
+      (elem: string) => {
+        return elem.replace(
+          /([\[\]\{\}]+)(?![0-9;]+m)/g,
+          `${PURPLE}$1${RESET}`
+        );
+      },
+      (elem: string) => {
+        return elem.replace(/(#.*)/g, (match) => {
+          // Strip existing color codes
+          const stripped = match.replace(/\x1b\[[0-9;]*m/g, "");
+          return `${DARK_GREEN}${stripped}${RESET}`;
+        });
+      },
+    ];
+
+    function map(array: string[]) {
+      let transformedArray = array;
+      for (let i = 0; i < replacements.length; i++) {
+        transformedArray = transformedArray.map(replacements[i]);
+      }
+      return transformedArray;
+    }
+
+    function replaceSingle(str: string) {
+      let transformedStr = str;
+      for (let i = 0; i < replacements.length; i++) {
+        transformedStr = replacements[i](transformedStr);
+      }
+      return transformedStr;
+    }
+
     let sourceLine = "";
     if (typeof line === "string") {
       const [startLine, endLine] = line.split("-").map(Number);
       const lines = src.split("\n");
       let contextLines = lines.slice(Math.max(0, startLine - 3), startLine - 1);
-      contextLines = contextLines.map((elem) =>
-        elem.replace(/([0-9]+(\.[0-9]+))/g, `${LIGHT_GREEN}$1${RESET}`)
-      );
+      contextLines = map(contextLines);
       sourceLine = contextLines
-        .map((line, index) => `|     ${startLine - 2 + index} | ${line}`)
+        .map(
+          (line, index) =>
+            `|     ${startLine - contextLines.length + index} | ${line}`
+        )
         .join("\n");
       let singleLine = lines[startLine - 1] || "";
-      singleLine = singleLine.replace(
-        /([0-9]+(\.[0-9]+)*)/g,
-        `${LIGHT_GREEN}$1${RESET}`
-      );
+      singleLine = replaceSingle(singleLine);
       sourceLine += `\n|     ${startLine} | ${singleLine}`;
     } else {
       let singleLine = src.split("\n")[line - 1] || "";
@@ -77,6 +134,17 @@ export class Err extends Error {
         break;
       case ErrorCode.CannotCreatePrimaryExpr:
         hint = "Do you have an invalid kind of symbol for an expression?";
+        break;
+      case ErrorCode.Expected__Got__:
+        hint = "Do you have a missing symbol somewhere?";
+        break;
+      case ErrorCode.AssignedValueOrExplicitTypeExpected:
+        hint =
+          "Do you have an assigned value or explicit type in variable declaration statement?";
+        break;
+      case ErrorCode.AssignedValueExpected:
+        hint =
+          "Do you have an assigned value to a constant variable in variable declaration statement?";
         break;
       default:
         hint = "NA";

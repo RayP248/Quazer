@@ -3,8 +3,6 @@ import { parse } from './parser/parser';
 import * as util from 'util';
 import { src } from './global';
 
-//TODO: ADD IMPROVED ERROR HANDLING (LINE, COLUMN, CODE SNIPP, ETC)
-
 function main() {
   const tokens = tokenize(src);
 

@@ -41,6 +41,7 @@ export enum TokenKind {
   MINUS_EQUALS,
   SLASH_EQUALS,
   STAR_EQUALS,
+  PERCENT_EQUALS,
 
   PLUS,
   DASH,
