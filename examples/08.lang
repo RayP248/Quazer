@@ -1,0 +1,12 @@
+package main;
+
+const x: number = 10;
+let y: number = 11;
+
+print(1 + y = 10);
+
+if x == y, then {
+  print(true);
+}
+
+exec.exit("Exiting...");

@@ -1,5 +1,6 @@
 import { Token } from "../lexer/tokens";
-import { Expr } from "./ast";
+import { Expr, Type } from "./ast";
+import { BlockStmt, Parameter } from "./statements";
 
 // Literal Expressions
 export interface NumberExpr extends Expr {
@@ -45,6 +46,50 @@ export interface AssignmentExpr extends Expr {
   assigne: Expr;
   operator: Token;
   val: Expr;
+  line: Record<string, number>;
+  column: Record<string, number>;
+  expr?(): () => {};
+}
+
+export interface StructInstantiationExpr extends Expr {
+  structName: string;
+  properties: Map<string, Expr>;
+  line: Record<string, number>;
+  column: Record<string, number>;
+  expr?(): () => {};
+}
+
+export interface ArrayLiteralExpr extends Expr {
+  elements: Expr[];
+  line: Record<string, number>;
+  column: Record<string, number>;
+  expr?(): () => {};
+}
+
+export interface MemberExpr extends Expr {
+  member: Expr;
+  property: string | Expr;
+  line: Record<string, number>;
+  column: Record<string, number>;
+  expr?(): () => {};
+}
+
+export interface CallExpr extends Expr {
+  method: Expr;
+  args: Expr[];
+  line: Record<string, number>;
+  column: Record<string, number>;
+  expr?(): () => {};
+}
+
+export interface FnExpr extends Expr {
+  params: Parameter[];
+  returnType: Type;
+  body: BlockStmt;
+}
+
+export interface ObjectExpr extends Expr {
+  properties: Map<string, Expr>;
   line: Record<string, number>;
   column: Record<string, number>;
   expr?(): () => {};

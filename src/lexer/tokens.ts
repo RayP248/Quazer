@@ -50,12 +50,14 @@ export enum TokenKind {
   PERCENT,
 
   // Reserved Keywords
+  PACKAGE,
+  FROM,
+  IMPORT,
   LET,
   CONST,
+  PUB,
   CLASS,
   NEW,
-  IMPORT,
-  FROM,
   FN,
   IF,
   ELSE,
@@ -65,13 +67,19 @@ export enum TokenKind {
   EXPORT,
   TYPEOF,
   IN,
+  STRUCT,
+  STATIC,
+  RETURN,
+  THEN,
 
   UNKNOWN,
 }
 
 export const reserved_lu: Record<string, TokenKind> = {
+  package: TokenKind.PACKAGE,
   let: TokenKind.LET,
   const: TokenKind.CONST,
+  pub: TokenKind.PUB,
   class: TokenKind.CLASS,
   new: TokenKind.NEW,
   import: TokenKind.IMPORT,
@@ -85,6 +93,10 @@ export const reserved_lu: Record<string, TokenKind> = {
   export: TokenKind.EXPORT,
   typeof: TokenKind.TYPEOF,
   in: TokenKind.IN,
+  struct: TokenKind.STRUCT,
+  static: TokenKind.STATIC,
+  return: TokenKind.RETURN,
+  then: TokenKind.THEN,
 };
 
 export interface TokenInterface {
@@ -205,6 +217,10 @@ export function tokenKindString(kind: TokenKind): string | void {
       return "COLON";
     case TokenKind.COMMA:
       return "COMMA";
+    case TokenKind.QUESTION:
+      return "QUESTION";
+    case TokenKind.ARROW:
+      return "ARROW";
     case TokenKind.PLUS_PLUS:
       return "PLUS_PLUS";
     case TokenKind.MINUS_MINUS:
@@ -227,10 +243,14 @@ export function tokenKindString(kind: TokenKind): string | void {
       return "STAR";
     case TokenKind.PERCENT:
       return "PERCENT";
+    case TokenKind.PACKAGE:
+      return "PACKAGE";
     case TokenKind.LET:
       return "LET";
     case TokenKind.CONST:
       return "CONST";
+    case TokenKind.PUB:
+      return "PUB";
     case TokenKind.CLASS:
       return "CLASS";
     case TokenKind.NEW:
@@ -255,6 +275,14 @@ export function tokenKindString(kind: TokenKind): string | void {
       return "TYPEOF";
     case TokenKind.IN:
       return "IN";
+    case TokenKind.STRUCT:
+      return "STRUCT";
+    case TokenKind.STATIC:
+      return "STATIC";
+    case TokenKind.RETURN:
+      return "RETURN";
+    case TokenKind.THEN:
+      return "THEN";
     default:
       new Err(
         new Token(
@@ -264,7 +292,8 @@ export function tokenKindString(kind: TokenKind): string | void {
           { start: 0, end: 0 }
         ),
         `Unknown token kind: ${kind}`,
-        ErrorCode.UnknownTokenKind
+        ErrorCode.UnknownTokenKind,
+        "tokens.ts : tokenKindString() : switch (kind) : default"
       ).throw();
   }
 }

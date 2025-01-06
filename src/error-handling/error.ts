@@ -1,7 +1,8 @@
-import { file, src } from "../global";
 import { reserved_lu, Token, tokenKindString } from "../lexer/tokens";
 import { Expr, Stmt } from "../ast/ast.ts";
+import Module from "node:module";
 
+const require = Module.createRequire(import.meta.url);
 export enum ErrorCode {
   UnrecognizedToken,
   UnknownTokenKind,
@@ -11,23 +12,39 @@ export enum ErrorCode {
   Expected__Got__,
   AssignedValueOrExplicitTypeExpected,
   AssignedValueExpected,
+  NotImplemented,
+  DuplicateProperty,
+  ExpectedInstanceOf,
+  VarDoesNotExist,
+  CannotReassignConstant,
+  InvalidBinaryOperation,
+  InvalidCall,
+  TypeMismatch,
+  MissingProp,
+  InvalidCallbackType,
+  ModuleNotFound,
+  InvalidCondition,
 }
 
 export class Err extends Error {
   private token: Token | Expr | Stmt;
   private errorCode: ErrorCode;
+  private origination: string;
 
   constructor(
     token: Token | Expr | Stmt,
     message: string,
-    errorCode: ErrorCode
+    errorCode: ErrorCode,
+    origination: string
   ) {
     super(message);
     this.token = token;
     this.errorCode = errorCode;
+    this.origination = origination;
   }
 
   public throw() {
+    const { src, file } = require("../main.ts");
     const RESET = "\x1b[0m";
     const RED = "\x1b[31m";
     const GREEN = "\x1b[32m";
@@ -37,6 +54,8 @@ export class Err extends Error {
     const CYAN = "\x1b[36m";
     const PURPLE = "\x1b[35m";
     const DARK_GREEN = "\x1b[38;2;0;100;0m";
+    const ORANGE = "\x1b[38;2;255;165;0m";
+    const FUNCTION_NAME = "\x1b[38;2;220;220;170m";
 
     const line = `${this.token.line.start}-${this.token.line.end}`;
     const column = `${this.token.column.start}-${this.token.column.end}`;
@@ -50,8 +69,14 @@ export class Err extends Error {
       },
       (elem: string) => {
         return elem.replace(
-          /(let|const|class|new|import|from|fn|if|else|foreach|while|for|export|typeof|in)/g,
+          /\b(let|const|class|new|import|from|fn|if|else|foreach|while|for|export|typeof|in|pub|return|struct|package)\b/g,
           `${BLUE}$1${RESET}`
+        );
+      },
+      (elem: string) => {
+        return elem.replace(
+          /((?!fn\b)\s+[a-zA-Z_]+)(\()/g,
+          `${FUNCTION_NAME}$1${RESET}$2`
         );
       },
       (elem: string) => {
@@ -61,11 +86,17 @@ export class Err extends Error {
         );
       },
       (elem: string) => {
+        return elem.replace(
+          /((\->)(\s+)(\b[a-zA-Z_]+\b))/g,
+          `${RESET}$2$3${GREEN}$4${RESET}`
+        );
+      },
+      (elem: string) => {
         return elem.replace(/\b([a-zA-Z_\[\]]+)\b/g, `${CYAN}$1${RESET}`);
       },
       (elem: string) => {
         return elem.replace(
-          /([\[\]\{\}]+)(?![0-9;]+m)/g,
+          /([\[\]\{\}\(\)]+)(?![0-9;]+m)/g,
           `${PURPLE}$1${RESET}`
         );
       },
@@ -74,6 +105,12 @@ export class Err extends Error {
           // Strip existing color codes
           const stripped = match.replace(/\x1b\[[0-9;]*m/g, "");
           return `${DARK_GREEN}${stripped}${RESET}`;
+        });
+      },
+      (elem: string) => {
+        return elem.replace(/"([^"]*)"/g, (match) => {
+          const stripped = match.replace(/\x1b\[[0-9;]*m/g, "");
+          return `${ORANGE}${stripped}${RESET}`;
         });
       },
     ];
@@ -98,7 +135,7 @@ export class Err extends Error {
     if (typeof line === "string") {
       const [startLine, endLine] = line.split("-").map(Number);
       const lines = src.split("\n");
-      let contextLines = lines.slice(Math.max(0, startLine - 3), startLine - 1);
+      let contextLines = lines.slice(Math.max(0, startLine - 5), startLine - 1);
       contextLines = map(contextLines);
       sourceLine = contextLines
         .map(
@@ -146,6 +183,35 @@ export class Err extends Error {
         hint =
           "Do you have an assigned value to a constant variable in variable declaration statement?";
         break;
+      case ErrorCode.NotImplemented:
+        hint = "This feature is not implemented yet.";
+        break;
+      case ErrorCode.DuplicateProperty:
+        hint = "Do you have a duplicate property in your object?";
+        break;
+      case ErrorCode.ExpectedInstanceOf:
+        hint = "Do you have an instance of the expected class?";
+        break;
+      case ErrorCode.VarDoesNotExist:
+        hint = "Are you trying to access a variable that does not exist?";
+        break;
+      case ErrorCode.CannotReassignConstant:
+        hint = "Are you trying to reassign a value to a constant?";
+        break;
+      case ErrorCode.InvalidBinaryOperation:
+        hint = "Do you have an invalid binary operation?";
+        break;
+      case ErrorCode.InvalidCall:
+        hint =
+          "Are you trying to call a function that does not exist or is not a function?";
+        break;
+      case ErrorCode.TypeMismatch:
+        hint = "Do you have a type mismatch somewhere?";
+        break;
+      case ErrorCode.MissingProp:
+        hint =
+          "Do you have a missing property from the strcut it's based off of in your struct?";
+        break;
       default:
         hint = "NA";
         break;
@@ -161,7 +227,7 @@ export class Err extends Error {
     console.error(
       ` --------------------------------------------------
 | quazer # ${RED}Error:${RESET} ${this.message.replace(/\n$/, "")}
-|   ---> ${file} : ${line} : ${column}
+|   ---> ${file} : ${line} : ${column} from ${this.origination}
 ${sourceLine}
 |     ${RED}${underline}${RESET}
 |   ${YELLOW}hint${RESET}: ${GREEN}${hint}${RESET}

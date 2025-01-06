@@ -33,6 +33,7 @@ export function parse(tokens: Token[]): BlockStmt {
   }
 
   return {
+    kind: "BlockStmt",
     body,
     line: { start: body[0]?.line.start, end: body[body.length - 1]?.line.end },
     column: {
@@ -64,27 +65,32 @@ export function hasTokens(p: parser): boolean {
 export function expectError(
   p: parser,
   expectedKind: TokenKind,
-  err: any
+  err: any,
+  origination: string
 ): Token {
   const token = currToken(p);
   const kind = token.kind;
 
   if (kind !== expectedKind) {
     if (err) {
-      new Err(token, err, ErrorCode.Expected__Got__).throw();
+      new Err(token, err, ErrorCode.Expected__Got__, origination).throw();
     } else {
       new Err(
         token,
         `Expected ${TokenKind[expectedKind]} but got ${TokenKind[kind]} instead.`,
-        ErrorCode.Expected__Got__
+        ErrorCode.Expected__Got__,
+        origination
       ).throw();
     }
-    process.exit(1);
   }
 
   return advance(p);
 }
 
-export function expect(p: parser, expectedKind: TokenKind): Token {
-  return expectError(p, expectedKind, undefined);
+export function expect(
+  p: parser,
+  expectedKind: TokenKind,
+  origination: string
+): Token {
+  return expectError(p, expectedKind, undefined, origination);
 }

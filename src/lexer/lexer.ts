@@ -99,7 +99,8 @@ export function tokenize(source: string): Token[] {
           lexerInstance.column
         ),
         `Unrecognized token.`,
-        ErrorCode.UnrecognizedToken
+        ErrorCode.UnrecognizedToken,
+        `lexer.ts : tokenize() : while (!lexerInstance.at_eof()) : if (!matched)`
       ).throw();
     }
   }
@@ -262,9 +263,9 @@ function skipHandler(lex: lexer, regex: RegExp) {
 function stringHandler(lex: lexer, regex: RegExp) {
   const match = regex.exec(lex.remainder());
   if (match) {
-    const stringLiteral = match[0];
+    const stringLiteral = match[0].slice(1, -1);
     lex.push(newToken(TokenKind.STRING, stringLiteral, lex.line, lex.column));
-    lex.advanceN(stringLiteral.length);
+    lex.advanceN(match[0].length);
   }
 }
 

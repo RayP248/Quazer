@@ -8,12 +8,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "util": "^0.12.5"
-  },
   "directories": {
     "example": "examples"
   },
-  "devDependencies": {},
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "util": "^0.12.5"
+  }
 }
